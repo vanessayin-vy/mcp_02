@@ -1,0 +1,10 @@
+{
+  "name": "ClaimsPortal",
+  "description": "An intelligent claims upload and verification portal powered by automated data extraction, compliance verification checklists, and audit-ready review workflows.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
