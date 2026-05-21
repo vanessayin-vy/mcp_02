@@ -52,7 +52,7 @@ export default function App() {
     } else {
       setPortalMode("policyholder");
       setCurrentTab("dashboard");
-      showToast("Toggled workspace: TrustAssure Policyholder Portal");
+      showToast("Toggled workspace: Trust Claim Agent");
     }
   };
 
@@ -506,7 +506,7 @@ export default function App() {
                   </div>
                   <div>
                     <h2 className="text-lg font-bold text-on-surface">Sarah Connor</h2>
-                    <p className="text-xs text-on-surface-variant font-medium">User Account Type: {portalMode === "admin" ? "Systems Administrator" : "Standard Policyholder"}</p>
+                    <p className="text-xs text-on-surface-variant font-medium">User Account Type: {portalMode === "admin" ? "Systems Administrator" : "Claim Agent"}</p>
                     <p className="text-[10px] text-on-surface-variant mt-0.5">ID: #TUA-8271049-A</p>
                   </div>
                 </div>
@@ -518,7 +518,7 @@ export default function App() {
                   </div>
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Active Insurance Policy</span>
-                    <p className="text-sm font-bold text-secondary">TrustAssure Ultimate Shield Plus</p>
+                    <p className="text-sm font-bold text-secondary">Trust Ultimate Shield Plus</p>
                   </div>
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Registered Email</span>

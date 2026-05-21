@@ -36,11 +36,11 @@ export default function Sidebar({ currentTab, onTabChange, portalMode }: Sidebar
       <div className="px-6 mb-4">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-2xl font-extrabold tracking-tight text-on-surface">
-            {portalMode === "admin" ? "ClaimFlow AI" : "TrustAssure"}
+            {portalMode === "admin" ? "ClaimFlow AI" : "Trust"}
           </span>
         </div>
         <p className="text-[10px] font-extrabold tracking-widest uppercase text-on-surface-variant/70">
-          {portalMode === "admin" ? "Enterprise Workspace" : "Policyholder Portal"}
+          {portalMode === "admin" ? "Enterprise Workspace" : "Claim Agent"}
         </p>
       </div>
 
