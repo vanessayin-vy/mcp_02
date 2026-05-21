@@ -9,15 +9,22 @@ import Header from "./components/Header";
 import DashboardView from "./components/DashboardView";
 import NewClaimView from "./components/NewClaimView";
 import VerifyView from "./components/VerifyView";
+
+// Enterprise Admin Portal Views
+import AdminQueueView from "./components/AdminQueueView";
+import AdminVerifyView from "./components/AdminVerifyView";
+import AdminAnalyticsView from "./components/AdminAnalyticsView";
+
 import { Claim, UploadedFile, ExtractedData, INITIAL_CLAIMS } from "./types";
-import { ShieldAlert, CheckCircle, Bell, X, FolderClosed } from "lucide-react";
+import { ShieldAlert, CheckCircle, Bell, X, FolderClosed, Clock, MessageSquare } from "lucide-react";
 
 export default function App() {
-  // Navigation State Tab
+  // Navigation State Tab & Portal Selection
+  const [portalMode, setPortalMode] = useState<"policyholder" | "admin" >("policyholder");
   const [currentTab, setCurrentTab] = useState<string>("dashboard");
   const [searchText, setSearchText] = useState<string>("");
 
-  // Primary Workspace Database States (Local Storage persistent if we want, or in-memory)
+  // Primary Workspace Database States
   const [claims, setClaims] = useState<Claim[]>(INITIAL_CLAIMS);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState<boolean>(false);
@@ -25,16 +32,29 @@ export default function App() {
   // Active Verification parameters
   const [activeVerificationData, setActiveVerificationData] = useState<ExtractedData | undefined>(undefined);
 
-  // Floating notifications alert state
+  // Custom visual components triggers
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
   const [notifications, setNotifications] = useState<Array<{ id: string; title: string; time: string; read: boolean }>>([
-    { id: "1", title: "Claim #9928-11 requires verification docs", time: "2 min ago", read: false },
-    { id: "2", title: "Claim #1150-08 successfully approved for payout!", time: "2 hours ago", read: true },
-    { id: "3", title: "AI Extraction service upgraded to 3.5-flash series", time: "1 day ago", read: true },
+    { id: "1", title: "Claim #CLM-98234-AX is flagged for duplicate period", time: "2 min ago", read: false },
+    { id: "2", title: "Claim #CLM-98238-ET successfully approved for payout!", time: "2 hours ago", read: true },
+    { id: "3", title: "Claims Intelligent Analyzer upgraded to 3.5-flash series", time: "1 day ago", read: true },
   ]);
 
   // Toast banner alerting custom system support
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Smooth mode switching handler
+  const handleTogglePortal = () => {
+    if (portalMode === "policyholder") {
+      setPortalMode("admin");
+      setCurrentTab("admin-dashboard");
+      showToast("Toggled workspace: ClaimFlow AI Intelligence");
+    } else {
+      setPortalMode("policyholder");
+      setCurrentTab("dashboard");
+      showToast("Toggled workspace: TrustAssure Policyholder Portal");
+    }
+  };
 
   // Pre-load default mock file items on start to match screenshot Submission step 1 exactly!
   useEffect(() => {
@@ -146,7 +166,6 @@ export default function App() {
       setIsUploading(true);
       const fileId = "file-" + Date.now();
       
-      // A. Instantly append as pending verifying status to UI list
       const newFile: UploadedFile = {
         id: fileId,
         name: file.name,
@@ -156,10 +175,8 @@ export default function App() {
       };
       setUploadedFiles((prev) => [newFile, ...prev]);
 
-      // B. Read base64 content
       const base64Payload = await fileToBase64(file);
 
-      // C. Submit to backend extraction API
       const response = await fetch("/api/extract", {
         method: "POST",
         headers: {
@@ -194,7 +211,6 @@ export default function App() {
       }
     } catch (err: any) {
       console.error("AI scan failed:", err);
-      // Fallback with clean simulation parameters so uploader flow is never locked
       setUploadedFiles((prev) =>
         prev.map((f) =>
           f.name === file.name
@@ -233,12 +249,10 @@ export default function App() {
   };
 
   const handleContinueToDetails = () => {
-    // Collect primary verifying file values or default to Global Logistics preset
     const firstVerified = uploadedFiles.find((f) => f.status === "verified" || f.status === "flagged");
     if (firstVerified && firstVerified.extractedData) {
       setActiveVerificationData(firstVerified.extractedData);
     } else {
-      // Direct load to default global logistics invoice preset shown in screen 2
       setActiveVerificationData({
         merchant: "Global Logistics Inc.",
         date: "10/14/2023",
@@ -258,7 +272,6 @@ export default function App() {
     setCurrentTab("verify");
   };
 
-  // Triggered when client finalizes step 2 claim details
   const handleFinalizeClaim = (claimPayload: Claim) => {
     setClaims((prev) => [claimPayload, ...prev]);
     setCurrentTab("dashboard");
@@ -278,7 +291,6 @@ export default function App() {
   };
 
   const openAttentionClaim = (claimId: string) => {
-    // Force set Global Logistics anomaly dataset to mirror the screenshot layout
     setActiveVerificationData({
       merchant: "Global Logistics Inc.",
       date: "10/14/2023",
@@ -297,11 +309,7 @@ export default function App() {
     setCurrentTab("verify");
   };
 
-  const triggerEmergencySupport = () => {
-    showToast("⚠️ Dispatching immediate assistance to TrustAssure policyholder Sarah. Please expect a callback in 3 minutes.");
-  };
 
-  // Filtered claims depending on quick search
   const filteredClaims = claims.filter((c) => {
     const term = searchText.toLowerCase();
     return (
@@ -312,32 +320,34 @@ export default function App() {
   });
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-on-surface">
+    <div className="flex flex-row h-screen w-screen overflow-hidden bg-background text-on-surface">
       
-      {/* 1. Global Navigation Top Header */}
-      <Header
+      {/* Sidebar on the absolute left - full page length */}
+      <Sidebar
         currentTab={currentTab}
         onTabChange={setCurrentTab}
-        searchText={searchText}
-        onSearchChange={setSearchText}
-        onOpenNotifications={() => setShowNotifications(!showNotifications)}
-        userName="Sarah"
-        userAvatar="https://lh3.googleusercontent.com/aida-public/AB6AXuBd03zqrdukpQiJ2twGC_reJI0kZ3k1U5SelOOFMJmlqdAaixWxN_kNrHUlXqQYQX_KKYRX4ZwKwy_I5-K_ZCiGxbNBALRpP0OAbaZsoB5cy4U-viMty4cRN8XbCO7Z_wltR9I-rquxLjFZif4MP4Bes6Oxcaoa6qzhzc4-Ul3PdtLYKz5TN5gK4ssCRtDFjbfwfAzufWyJDZW0PneHUOo-P6VqEG7OsUtlsh0QuU-U8FAh-Jb2CHSBX683DHckrSYUehRKXkM1qHoc"
+        portalMode={portalMode}
       />
 
-      {/* Main layout container with sidebar navigation and viewport */}
-      <div className="flex flex-row flex-1 pt-16 h-full min-h-[calc(100vh-64px)] overflow-hidden">
+      {/* Main layout container for right-side Header and content viewport */}
+      <div className="flex flex-col flex-1 h-full overflow-hidden relative">
         
-        {/* Left Side menu */}
-        <Sidebar
+        {/* Global Navigation Top Header */}
+        <Header
           currentTab={currentTab}
           onTabChange={setCurrentTab}
-          onTriggerEmergency={triggerEmergencySupport}
+          searchText={searchText}
+          onSearchChange={setSearchText}
+          onOpenNotifications={() => setShowNotifications(!showNotifications)}
+          userName="Sarah"
+          userAvatar="https://lh3.googleusercontent.com/aida-public/AB6AXuBd03zqrdukpQiJ2twGC_reJI0kZ3k1U5SelOOFMJmlqdAaixWxN_kNrHUlXqQYQX_KKYRX4ZwKwy_I5-K_ZCiGxbNBALRpP0OAbaZsoB5cy4U-viMty4cRN8XbCO7Z_wltR9I-rquxLjFZif4MP4Bes6Oxcaoa6qzhzc4-Ul3PdtLYKz5TN5gK4ssCRtDFjbfwfAzufWyJDZW0PneHUOo-P6VqEG7OsUtlsh0QuU-U8FAh-Jb2CHSBX683DHckrSYUehRKXkM1qHoc"
+          portalMode={portalMode}
+          onTogglePortal={handleTogglePortal}
         />
 
         {/* Global application notifications popover */}
         {showNotifications && (
-          <div className="absolute top-16 right-8 w-80 bg-white border border-outline-variant shadow-2xl rounded-2xl p-4 z-50 animate-fadeIn">
+          <div className="absolute top-16 right-8 w-80 bg-white border border-outline-variant shadow-2xl rounded-2xl p-4 z-50 animate-fadeIn text-xs">
             <div className="flex justify-between items-center border-b border-outline-variant/30 pb-3 mb-3">
               <h4 className="font-bold text-sm text-on-surface flex items-center gap-1.5">
                 <Bell size={16} className="text-secondary" />
@@ -361,9 +371,11 @@ export default function App() {
                     setNotifications((prev) =>
                       prev.map((n) => (n.id === notif.id ? { ...n, read: true } : n))
                     );
-                    if (notif.id === "1") {
+                    setShowNotifications(false);
+                    if (portalMode === "policyholder") {
                       openAttentionClaim("CLM-9928-11");
-                      setShowNotifications(false);
+                    } else {
+                      setCurrentTab("admin-verify");
                     }
                   }}
                 >
@@ -383,58 +395,97 @@ export default function App() {
           </div>
         )}
 
+
         {/* Main interactive main workspace viewport */}
         <main className="flex-grow overflow-y-auto bg-background p-8">
           <div className="max-w-[1240px] mx-auto min-h-full">
-            {currentTab === "dashboard" && (
-              <DashboardView
-                claims={filteredClaims}
-                onStartNewClaim={() => setCurrentTab("new-claim")}
-                onSelectClaim={(claim) => {
-                  if (claim.status === "Flagged" || claim.id === "CLM-9928-11") {
-                    openAttentionClaim(claim.id);
-                  } else {
-                    showToast(`Viewing Verified Claim ${claim.id} for $${claim.amount}`);
-                  }
-                }}
-                onNavigateToAttentionClaim={openAttentionClaim}
-              />
+            
+            {/* POLICYHOLDER PORTAL VIEWS */}
+            {portalMode === "policyholder" && (
+              <>
+                {currentTab === "dashboard" && (
+                  <DashboardView
+                    claims={filteredClaims}
+                    onStartNewClaim={() => setCurrentTab("new-claim")}
+                    onSelectClaim={(claim) => {
+                      if (claim.status === "Flagged" || claim.id === "CLM-9928-11") {
+                        openAttentionClaim(claim.id);
+                      } else {
+                        showToast(`Viewing Verified Claim ${claim.id} for $${claim.amount}`);
+                      }
+                    }}
+                    onNavigateToAttentionClaim={openAttentionClaim}
+                  />
+                )}
+
+                {currentTab === "new-claim" && (
+                  <NewClaimView
+                    files={uploadedFiles}
+                    onUploadFile={handleUploadFile}
+                    onRemoveFile={handleRemoveFile}
+                    onFixFile={handleFixFile}
+                    onContinueToDetails={handleContinueToDetails}
+                    onSaveDraft={() => {
+                      showToast("Draft successfully backed up locally.");
+                      setCurrentTab("dashboard");
+                    }}
+                    isProcessing={isUploading}
+                  />
+                )}
+
+                {currentTab === "verify" && (
+                  <VerifyView
+                    initialData={activeVerificationData}
+                    onSaveDraft={handleSaveDraft}
+                    onSubmitClaim={handleFinalizeClaim}
+                    onCancel={() => setCurrentTab("new-claim")}
+                  />
+                )}
+              </>
             )}
 
-            {currentTab === "new-claim" && (
-              <NewClaimView
-                files={uploadedFiles}
-                onUploadFile={handleUploadFile}
-                onRemoveFile={handleRemoveFile}
-                onFixFile={handleFixFile}
-                onContinueToDetails={handleContinueToDetails}
-                onSaveDraft={() => {
-                  showToast("Draft successfully backed up locally.");
-                  setCurrentTab("dashboard");
-                }}
-                isProcessing={isUploading}
-              />
+            {/* ENTERPRISE ADMIN PORTAL VIEWS */}
+            {portalMode === "admin" && (
+              <>
+                {currentTab === "admin-dashboard" && (
+                  <AdminAnalyticsView />
+                )}
+
+                {currentTab === "admin-queue" && (
+                  <AdminQueueView
+                    onSelectClaim={(cid) => {
+                      setCurrentTab("admin-verify");
+                    }}
+                  />
+                )}
+
+                {currentTab === "admin-verify" && (
+                  <AdminVerifyView
+                    claimId="#CLM-98234-AX"
+                    onBack={() => setCurrentTab("admin-queue")}
+                    onVerify={(data) => {
+                      showToast(`Claim successfully verified/approved! Resolution status: separate transaction.`);
+                      setCurrentTab("admin-queue");
+                    }}
+                    onEscalate={() => {
+                      showToast("Claim escalated to fraud supervisor review.");
+                      setCurrentTab("admin-queue");
+                    }}
+                  />
+                )}
+              </>
             )}
 
-            {currentTab === "verify" && (
-              <VerifyView
-                initialData={activeVerificationData}
-                onSaveDraft={handleSaveDraft}
-                onSubmitClaim={handleFinalizeClaim}
-                onCancel={() => setCurrentTab("new-claim")}
-              />
-            )}
-
-            {/* Simulated Additional Views for complete compliance with user options */}
+            {/* SHARED COMMON VIEWS */}
             {currentTab === "documents" && (
-              <div className="bg-white rounded-2xl border border-outline-variant p-8 text-center max-w-lg mx-auto mt-12 animate-fadeIn space-y-4">
+              <div className="bg-white rounded-2xl border border-outline-variant p-8 text-center max-w-lg mx-auto mt-12 animate-fadeIn space-y-4 shadow-sm">
                 <FolderClosed size={48} className="mx-auto text-secondary" />
                 <h2 className="text-lg font-bold text-on-surface">Documents Insurance Vault</h2>
                 <p className="text-sm text-on-surface-variant">
                   Here is the secure store of all historical insurance policies, signed legal statements, healthcare waivers, and scanned shipping manifests.
                 </p>
                 <button
-                  onClick={() => setCurrentTab("dashboard")}
+                  onClick={() => setCurrentTab(portalMode === "admin" ? "admin-dashboard" : "dashboard")}
                   className="bg-primary text-on-primary font-bold text-xs py-2.5 px-6 rounded-xl hover:opacity-90 mt-2"
                 >
                   Return to Dashboard
@@ -443,9 +494,9 @@ export default function App() {
             )}
 
             {currentTab === "settings" && (
-              <div className="bg-white rounded-2xl border border-outline-variant p-8 max-w-2xl mx-auto mt-8 animate-fadeIn space-y-6">
+              <div className="bg-white rounded-2xl border border-outline-variant p-8 max-w-2xl mx-auto mt-8 animate-fadeIn space-y-6 shadow-sm">
                 <div className="flex gap-4 items-center">
-                  <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-secondary">
+                  <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-secondary shrink-0">
                     <img
                       src="https://lh3.googleusercontent.com/aida-public/AB6AXuBd03zqrdukpQiJ2twGC_reJI0kZ3k1U5SelOOFMJmlqdAaixWxN_kNrHUlXqQYQX_KKYRX4ZwKwy_I5-K_ZCiGxbNBALRpP0OAbaZsoB5cy4U-viMty4cRN8XbCO7Z_wltR9I-rquxLjFZif4MP4Bes6Oxcaoa6qzhzc4-Ul3PdtLYKz5TN5gK4ssCRtDFjbfwfAzufWyJDZW0PneHUOo-P6VqEG7OsUtlsh0QuU-U8FAh-Jb2CHSBX683DHckrSYUehRKXkM1qHoc"
                       alt="Sarah profile pic"
@@ -455,25 +506,26 @@ export default function App() {
                   </div>
                   <div>
                     <h2 className="text-lg font-bold text-on-surface">Sarah Connor</h2>
-                    <p className="text-xs text-on-surface-variant font-medium">Policyholder ID: #TUA-8271049-A</p>
+                    <p className="text-xs text-on-surface-variant font-medium">User Account Type: {portalMode === "admin" ? "Systems Administrator" : "Standard Policyholder"}</p>
+                    <p className="text-[10px] text-on-surface-variant mt-0.5">ID: #TUA-8271049-A</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-outline-variant/30">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-outline-variant/30 text-xs">
                   <div className="space-y-1">
-                    <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Premium Deductible</span>
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Deductible Status</span>
                     <p className="text-sm font-bold text-on-surface">$500.00 / year</p>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Active Policy</span>
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Active Insurance Policy</span>
                     <p className="text-sm font-bold text-secondary">TrustAssure Ultimate Shield Plus</p>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Email</span>
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Registered Email</span>
                     <p className="text-sm font-bold text-on-surface">sarah.connor@skyline.org</p>
                   </div>
                   <div className="space-y-1 font-sans">
-                    <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Support Agent</span>
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Assigned Agent</span>
                     <p className="text-sm font-bold text-on-surface">Morpheus Johnson (Ext. 402)</p>
                   </div>
                 </div>
@@ -481,18 +533,24 @@ export default function App() {
             )}
 
             {currentTab === "help" && (
-              <div className="bg-white rounded-2xl border border-outline-variant p-8 max-w-xl mx-auto mt-12 animate-fadeIn space-y-4 text-center">
+              <div className="bg-white rounded-2xl border border-outline-variant p-8 max-w-xl mx-auto mt-12 animate-fadeIn space-y-4 text-center shadow-sm">
                 <ShieldAlert size={40} className="mx-auto text-secondary" />
                 <h2 className="text-lg font-bold text-on-surface">Claims Verification Guidelines</h2>
                 <p className="text-sm text-on-surface-variant leading-relaxed">
-                  Welcome to the TrustAssure Policyholder help desk. Learn about how neural models scan invoices, common matching failures, handling co-payments, and claim dispute options.
+                  Welcome to the help desk. Learn about how neural models scan invoices, common matching failures, handling co-payments, and claim dispute options.
                 </p>
                 <div className="pt-2">
                   <button
-                    onClick={() => setCurrentTab("new-claim")}
+                    onClick={() => {
+                      if (portalMode === "admin") {
+                        setCurrentTab("admin-dashboard");
+                      } else {
+                        setCurrentTab("new-claim");
+                      }
+                    }}
                     className="bg-secondary text-on-secondary text-xs py-2 px-5 rounded-lg font-bold hover:brightness-115"
                   >
-                    Start upload
+                    {portalMode === "admin" ? "Return to Dashboard" : "Start upload"}
                   </button>
                 </div>
               </div>

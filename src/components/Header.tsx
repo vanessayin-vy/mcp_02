@@ -13,6 +13,8 @@ interface HeaderProps {
   onOpenNotifications: () => void;
   userName: string;
   userAvatar: string;
+  portalMode: "policyholder" | "admin";
+  onTogglePortal: () => void;
 }
 
 export default function Header({
@@ -23,52 +25,37 @@ export default function Header({
   onOpenNotifications,
   userName,
   userAvatar,
+  portalMode,
+  onTogglePortal,
 }: HeaderProps) {
   return (
-    <header className="glass-header flex justify-between items-center w-full px-8 h-16 bg-surface border-b border-outline-variant z-40 fixed top-0 left-0">
-      {/* Brand Launcher Logo */}
-      <button 
-        onClick={() => onTabChange("dashboard")} 
-        className="flex items-center gap-2 hover:opacity-85 transition-opacity"
-      >
-        <span className="text-xl font-bold tracking-tight text-primary font-sans">
-          ClaimsPortal
+    <header className="glass-header flex justify-between items-center w-full px-8 h-16 bg-surface border-b border-outline-variant z-40 shrink-0">
+      
+      {/* Dynamic Tab Page Title */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-bold uppercase tracking-wider text-on-surface-variant/80">
+          {currentTab === "dashboard" || currentTab === "admin-dashboard" ? "Dashboard" : 
+           currentTab === "documents" ? "Documents" :
+           currentTab === "settings" ? "Profile Settings" :
+           currentTab === "new-claim" ? "New Claim Submission" :
+           currentTab === "verify" ? "Claim Extraction Verification" :
+           currentTab === "admin-queue" ? "Intelligent Claims Queue" :
+           currentTab === "admin-verify" ? "Claim Verification & Audit" : "Workspace"}
         </span>
-      </button>
+      </div>
 
-      {/* Center Search Inputs or View Toggle Links */}
+      {/* Center Search Inputs and Right Actions */}
       <div className="flex items-center gap-8">
-        <div className="hidden md:flex items-center gap-8 mr-4">
-          <button
-            onClick={() => onTabChange("dashboard")}
-            className={`text-sm tracking-wide font-semibold transition-colors ${
-              currentTab === "dashboard"
-                ? "text-secondary font-bold"
-                : "text-on-surface-variant hover:text-primary"
-            }`}
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => onTabChange("settings")}
-            className={`text-sm tracking-wide font-semibold transition-colors ${
-              currentTab === "settings"
-                ? "text-secondary font-bold"
-                : "text-on-surface-variant hover:text-primary"
-            }`}
-          >
-            My Profile
-          </button>
-        </div>
-
+        
         {/* Global Right Action Icons */}
         <div className="flex items-center gap-4">
+          
           {/* Quick Search Panel */}
           <div className="hidden sm:flex items-center bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant/30">
             <Search size={16} className="text-on-surface-variant/70 mr-1.5" />
             <input
               type="text"
-              placeholder="Search claims..."
+              placeholder={portalMode === "admin" ? "Search queue..." : "Search claims..."}
               value={searchText}
               onChange={(e) => onSearchChange(e.target.value)}
               className="bg-transparent border-none text-xs text-on-surface w-36 placeholder:text-on-surface-variant/50 focus:outline-none"
@@ -85,11 +72,15 @@ export default function Header({
             <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full animate-pulse"></span>
           </button>
 
-          {/* User Profile Avatar */}
-          <div 
+          {/* User Profile Avatar Icon button */}
+          <button 
             onClick={() => onTabChange("settings")}
-            className="h-8 w-8 rounded-full overflow-hidden border border-outline-variant cursor-pointer hover:border-secondary transition-all"
-            title={`${userName}'s profile`}
+            className={`h-8 w-8 rounded-full overflow-hidden border transition-all flex items-center justify-center shrink-0 cursor-pointer ${
+              currentTab === "settings"
+                ? "bg-secondary-container/15 border-secondary text-secondary shadow-sm"
+                : "border-outline-variant hover:border-secondary bg-surface-container-low"
+            }`}
+            title="My Profile"
           >
             {userAvatar ? (
               <img
@@ -99,11 +90,11 @@ export default function Header({
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <div className="w-full h-full bg-surface-container-highest flex items-center justify-center text-on-surface">
+              <div className="text-on-surface">
                 <User size={16} />
               </div>
             )}
-          </div>
+          </button>
         </div>
       </div>
     </header>

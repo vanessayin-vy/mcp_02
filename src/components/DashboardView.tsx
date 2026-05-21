@@ -44,13 +44,6 @@ export default function DashboardView({
             Your claim status is being monitored in real-time. We've updated your dashboard with the latest reimbursement data.
           </p>
         </div>
-        <button
-          onClick={onStartNewClaim}
-          className="bg-primary text-on-primary font-bold px-6 py-3 rounded-full shadow-lg hover:shadow-xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2"
-        >
-          <Plus size={18} />
-          Start New Claim
-        </button>
       </div>
 
       {/* Bento Grid Analytics Cards */}
